@@ -1,0 +1,10 @@
+venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary Files / OS Files
+.DS_Store
+*.log
