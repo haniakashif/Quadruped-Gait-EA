@@ -18,7 +18,8 @@ asset = root.find("asset")
 if asset is not None:
     for mesh in asset.findall("mesh"):
         old_file = mesh.attrib["file"]
-        mesh.attrib["file"] = f"robot_model/meshes/{old_file}"
+        # mesh.attrib["file"] = f"robot_model/meshes/{old_file}"
+        mesh.attrib["file"] = f"meshes/{old_file}"
 
 # 2. Containerize the Robot, fix Self-Collision, paint Visuals
 worldbody = root.find("worldbody")

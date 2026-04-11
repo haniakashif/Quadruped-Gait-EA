@@ -2,32 +2,32 @@
   <compiler angle="radian" />
 
   <asset>
-    <mesh name="base_link" content_type="model/stl" file="robot_model/meshes/base_link.STL" />
-    <mesh name="base_link_collision" content_type="model/stl" file="robot_model/meshes/base_link_collision.STL" />
-    <mesh name="bl_foot" content_type="model/stl" file="robot_model/meshes/bl_foot.STL" />
-    <mesh name="bl_foot_collision" content_type="model/stl" file="robot_model/meshes/bl_foot_collision.STL" />
-    <mesh name="bl_hip" content_type="model/stl" file="robot_model/meshes/bl_hip.STL" />
-    <mesh name="bl_hip_collision" content_type="model/stl" file="robot_model/meshes/bl_hip_collision.STL" />
-    <mesh name="bl_knee" content_type="model/stl" file="robot_model/meshes/bl_knee.STL" />
-    <mesh name="bl_knee_collision" content_type="model/stl" file="robot_model/meshes/bl_knee_collision.STL" />
-    <mesh name="br_foot" content_type="model/stl" file="robot_model/meshes/br_foot.STL" />
-    <mesh name="br_foot_collision" content_type="model/stl" file="robot_model/meshes/br_foot_collision.STL" />
-    <mesh name="br_hip" content_type="model/stl" file="robot_model/meshes/br_hip.STL" />
-    <mesh name="br_hip_collision" content_type="model/stl" file="robot_model/meshes/br_hip_collision.STL" />
-    <mesh name="br_knee" content_type="model/stl" file="robot_model/meshes/br_knee.STL" />
-    <mesh name="br_knee_collision" content_type="model/stl" file="robot_model/meshes/br_knee_collision.STL" />
-    <mesh name="fl_foot" content_type="model/stl" file="robot_model/meshes/fl_foot.STL" />
-    <mesh name="fl_foot_collision" content_type="model/stl" file="robot_model/meshes/fl_foot_collision.STL" />
-    <mesh name="fl_hip" content_type="model/stl" file="robot_model/meshes/fl_hip.STL" />
-    <mesh name="fl_hip_collision" content_type="model/stl" file="robot_model/meshes/fl_hip_collision.STL" />
-    <mesh name="fl_knee" content_type="model/stl" file="robot_model/meshes/fl_knee.STL" />
-    <mesh name="fl_knee_collision" content_type="model/stl" file="robot_model/meshes/fl_knee_collision.STL" />
-    <mesh name="fr_foot" content_type="model/stl" file="robot_model/meshes/fr_foot.STL" />
-    <mesh name="fr_foot_collision" content_type="model/stl" file="robot_model/meshes/fr_foot_collision.STL" />
-    <mesh name="fr_hip" content_type="model/stl" file="robot_model/meshes/fr_hip.STL" />
-    <mesh name="fr_hip_collision" content_type="model/stl" file="robot_model/meshes/fr_hip_collision.STL" />
-    <mesh name="fr_knee" content_type="model/stl" file="robot_model/meshes/fr_knee.STL" />
-    <mesh name="fr_knee_collision" content_type="model/stl" file="robot_model/meshes/fr_knee_collision.STL" />
+    <mesh name="base_link" content_type="model/stl" file="meshes/base_link.STL" />
+    <mesh name="base_link_collision" content_type="model/stl" file="meshes/base_link_collision.STL" />
+    <mesh name="bl_foot" content_type="model/stl" file="meshes/bl_foot.STL" />
+    <mesh name="bl_foot_collision" content_type="model/stl" file="meshes/bl_foot_collision.STL" />
+    <mesh name="bl_hip" content_type="model/stl" file="meshes/bl_hip.STL" />
+    <mesh name="bl_hip_collision" content_type="model/stl" file="meshes/bl_hip_collision.STL" />
+    <mesh name="bl_knee" content_type="model/stl" file="meshes/bl_knee.STL" />
+    <mesh name="bl_knee_collision" content_type="model/stl" file="meshes/bl_knee_collision.STL" />
+    <mesh name="br_foot" content_type="model/stl" file="meshes/br_foot.STL" />
+    <mesh name="br_foot_collision" content_type="model/stl" file="meshes/br_foot_collision.STL" />
+    <mesh name="br_hip" content_type="model/stl" file="meshes/br_hip.STL" />
+    <mesh name="br_hip_collision" content_type="model/stl" file="meshes/br_hip_collision.STL" />
+    <mesh name="br_knee" content_type="model/stl" file="meshes/br_knee.STL" />
+    <mesh name="br_knee_collision" content_type="model/stl" file="meshes/br_knee_collision.STL" />
+    <mesh name="fl_foot" content_type="model/stl" file="meshes/fl_foot.STL" />
+    <mesh name="fl_foot_collision" content_type="model/stl" file="meshes/fl_foot_collision.STL" />
+    <mesh name="fl_hip" content_type="model/stl" file="meshes/fl_hip.STL" />
+    <mesh name="fl_hip_collision" content_type="model/stl" file="meshes/fl_hip_collision.STL" />
+    <mesh name="fl_knee" content_type="model/stl" file="meshes/fl_knee.STL" />
+    <mesh name="fl_knee_collision" content_type="model/stl" file="meshes/fl_knee_collision.STL" />
+    <mesh name="fr_foot" content_type="model/stl" file="meshes/fr_foot.STL" />
+    <mesh name="fr_foot_collision" content_type="model/stl" file="meshes/fr_foot_collision.STL" />
+    <mesh name="fr_hip" content_type="model/stl" file="meshes/fr_hip.STL" />
+    <mesh name="fr_hip_collision" content_type="model/stl" file="meshes/fr_hip_collision.STL" />
+    <mesh name="fr_knee" content_type="model/stl" file="meshes/fr_knee.STL" />
+    <mesh name="fr_knee_collision" content_type="model/stl" file="meshes/fr_knee_collision.STL" />
   </asset>
 
   <worldbody>

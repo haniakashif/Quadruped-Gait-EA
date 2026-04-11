@@ -8,6 +8,7 @@ def main():
     
     # Ensure it targets the correct scene file
     xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+    # print(f"Using XML file: {xml_path}")
     
     try:
         model = mujoco.MjModel.from_xml_path(xml_path)
