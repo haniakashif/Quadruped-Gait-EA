@@ -9,7 +9,6 @@ mujoco.mj_saveLastXML(raw_path, model)
 tree = ET.parse(raw_path)
 root = tree.getroot()
 
-# 1. Clean compiler tags and fix relative asset paths
 compiler = root.find("compiler")
 if compiler is not None and "meshdir" in compiler.attrib:
     del compiler.attrib["meshdir"]
@@ -21,15 +20,15 @@ if asset is not None:
         # mesh.attrib["file"] = f"robot_model/meshes/{old_file}"
         mesh.attrib["file"] = f"meshes/{old_file}"
 
-# 2. Containerize the Robot, fix Self-Collision, paint Visuals
 worldbody = root.find("worldbody")
 if worldbody is not None:
     for geom in worldbody.iter("geom"):
+        # group 0 is the collision meshes, group 1 is visual meshes
         group = geom.attrib.get("group", "0")
         if group == "0":
             geom.attrib["contype"] = "1"  # 0 means disable self-collisions
-            geom.attrib["conaffinity"] = "1"
-        elif group == "1" or group == "2": # group 1 & 2 are other meshes, not collision meshes
+            geom.attrib["conaffinity"] = "1" # only collide with other group 0 geoms
+        elif group == "1" or group == "2":
             geom.attrib["rgba"] = "0.7 0.7 0.75 1.0"
 
     base_body = ET.Element("body", name="base_link", pos="0 0 0.3")
@@ -53,8 +52,7 @@ if worldbody is not None:
 # def_geom.attrib["solimp"] = "0.9 0.95 0.001"
 # def_geom.attrib["solref"] = "0.02 1"
 
-# 4. Generate the Actuators (Motors)
-# This mimics the ros2_control position interface with p=5.0 and d=0.1
+
 actuator = ET.SubElement(root, "actuator")
 for joint in root.iter("joint"):
     j_name = joint.attrib.get("name")
