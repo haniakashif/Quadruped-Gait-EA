@@ -15,20 +15,22 @@
 
     <asset>
         <!-- size = (length, width, height, terrain vertical shift to avoid -ve offset) -->
-        <hfield name="rough_terrain" nrow="100" ncol="30" size="2.5 7.5 0.06 0.06"/>
+        <hfield name="rough_terrain" nrow="100" ncol="10" size="0.5 4 0.06 0.06"/>
     </asset>
 
     <worldbody>
         <light pos="0 0 5" dir="0 0 -1" directional="true"/>
 
-        <geom name="terrain_geom" type="hfield" hfield="rough_terrain" pos="0 5.5 0" friction="0.7 0.005 0.0001" contype="1" conaffinity="1" rgba="0 0 0 0"/>
-        <geom name="terrain_visual" type="hfield" hfield="rough_terrain" pos="0 5.5 0" group="1" contype="0" conaffinity="0" rgba="0.6 0.5 0.4 1"/>
+        <geom name="terrain_geom" type="hfield" hfield="rough_terrain" pos="0 3.7 0" friction="0.7 0.005 0.0001" contype="1" conaffinity="1" rgba="0 0 0 0"/>
+        <geom name="terrain_visual" type="hfield" hfield="rough_terrain" pos="0 3.7 0" group="1" contype="0" conaffinity="0" rgba="0.6 0.5 0.4 1"/>
         
-        <!-- to prevent robot from falling off the terrain -->
-        <geom name="wall_back" type="box" pos="0 -2 0.5" size="2.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
-        <geom name="wall_front" type="box" pos="0 13 0.5" size="2.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
-        <geom name="wall_left" type="box" pos="-2.5 5.5 0.5" size="0.05 7.5 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
-        <geom name="wall_right" type="box" pos="2.5 5.5 0.5" size="0.05 7.5 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        <geom name="wall_back" type="box" pos="0 -0.3 0.5" size="0.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        
+        <geom name="wall_front" type="box" pos="0 7.7 0.5" size="0.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        
+        <geom name="wall_left" type="box" pos="-0.5 3.7 0.5" size="0.05 4 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        
+        <geom name="wall_right" type="box" pos="0.5 3.7 0.5" size="0.05 4 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
         
     </worldbody>
 
