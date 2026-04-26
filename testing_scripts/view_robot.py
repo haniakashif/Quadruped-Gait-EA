@@ -37,10 +37,9 @@ def generate_blocky_terrain(nrow, ncol):
     return terrain.flatten()
 
 
-
 def main():
     print("Loading simulation...")
-    xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scene.xml")
     
     try:
         model = mujoco.MjModel.from_xml_path(xml_path)

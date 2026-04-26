@@ -160,8 +160,8 @@ def shift_trajectory(leg_ind, xyzK):
 
     # schedule = [(0, 0), (2, 1), (1, 2), (3, 3)] # Order of swing: FR, BL, BR, FL
     # schedule = [(3, 0), (1, 1), (2, 2), (0, 3)] # Order of swing: FL, BR, BL, FR
-    # schedule = [(0, 0), (1, 1), (3, 2), (2, 3)] # Order of swing: FR, BL, BR, FL
-    schedule = [(1, 0), (2, 1), (0, 2), (3, 3)] # Order of swing: BR, BL, FR, FL
+    schedule = [(0, 0), (1, 1), (3, 2), (2, 3)] # Order of swing: FR, BL, BR, FL
+    # schedule = [(1, 0), (2, 1), (0, 2), (3, 3)] # Order of swing: BR, BL, FR, FL
     # schedule = [(0, 0), (3, 1), (1, 2), (2, 3) ] # Order of swing: FR, FL, BR, BL
     # schedule = [(0, 0), (2, 0), (1, 1), (3, 1)] # Trot
 

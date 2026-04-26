@@ -1,8 +1,10 @@
 import os
+# import sys
 import time
 import numpy as np
 import mujoco
 import mujoco.viewer
+# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import kinematics as kin  
 
 def generate_blocky_terrain(nrow, ncol, seed):
@@ -45,7 +47,7 @@ def main():
         kin.inv_kin_array(xyz2, 2), kin.inv_kin_array(xyz3, 3)
     ]
     steps_len = len(theta_targets[0][0])
-    xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scene.xml")
     
     print(f"Launching Sequential GUI for {population_size} Iterations...")
     print("-" * 60)

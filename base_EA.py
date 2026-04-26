@@ -3,12 +3,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class BaseEA(ABC):
-	def __init__(self, population_size, minimize, mutation_rate, num_offspring):
+	def __init__(self, population_size, minimize, mutation_rate, num_offspring, visual_mode):
 		self.population_size = population_size
 		self.minimize = minimize
 		self.chromosomes = None
 		self.curr_fitness = None
 		self.mutation_rate = mutation_rate
+		self.visual_mode = visual_mode
 		self.num_offspring = num_offspring
 
 	# Problem-specific

@@ -1,8 +1,10 @@
 import os
+# import sys
 import time
 import numpy as np
 import mujoco
 import multiprocessing as mp
+# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import kinematics as kin  
 
 def generate_blocky_terrain(nrow, ncol):
@@ -34,7 +36,7 @@ def simulate_headless_robot(args):
     robot_id, lock, theta_targets, steps_len, target_freq = args
     
     try:
-        xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+        xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scene.xml")
         
         # Lock the compiler to prevent I/O race conditions on the hard drive
         with lock:
