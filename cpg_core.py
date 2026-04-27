@@ -2,9 +2,7 @@ import numpy as np
 from typing import Tuple
 
 def update_state_variables(current_val: np.ndarray, target_val: np.ndarray, gamma: float, dt: float) -> np.ndarray:
-    # dot_x = gamma * (target - current)
     derivative = gamma * (target_val - current_val)
-    # x_new = x_old + dot_x * dt
     return current_val + (derivative * dt)
 
 def update_global_phases(current_phi_0: np.ndarray, omega: float, w: float, target_offsets: np.ndarray, dt: float) -> np.ndarray:
@@ -15,11 +13,10 @@ def update_global_phases(current_phi_0: np.ndarray, omega: float, w: float, targ
         coupling_sum = 0
         for j in range(n_legs):
             if i == j: continue
-            # Eq 12: w_ij * sin(phi_j - phi_i - target_diff_ij) [cite: 197]
+            # eq 12
             phase_diff = target_offsets[j] - target_offsets[i]
             coupling_sum += w * np.sin(current_phi_0[j] - current_phi_0[i] - phase_diff)
         
-        # dot_phi = 2*pi*omega + coupling_sum [cite: 197]
         d_phi[i] = 2 * np.pi * omega + coupling_sum
         
     return current_phi_0 + (d_phi * dt)
@@ -44,24 +41,23 @@ def apply_duty_cycle_filter(phi: np.ndarray, d: float) -> np.ndarray:
     return res
 
 def apply_spline_filter(phi_warped: np.ndarray) -> np.ndarray:
-    # Eq 11: Normalized phase over 0.5 cycle [cite: 188]
+    # normalize phase eq 11
     phi_N = 2 * ((phi_warped / (2 * np.pi)) % 0.5)
     res = np.zeros_like(phi_N)
     
     mask = phi_N < 0.5
-    # First half of spline [cite: 186]
+    
     res[mask] = -16 * (phi_N[mask]**3) + 12 * (phi_N[mask]**2)
-    # Second half of spline [cite: 187]
-    res[~mask] = 16 * ((phi_N[~mask] - 1)**3) + 12 * ((phi_N[~mask] - 1)**2)
+    res[~mask] = 16 * ((phi_N[~mask] - 0.5)**3) - 12 * ((phi_N[~mask] - 0.5)**2) + 1
     
     return res
 
 def compute_target_angles(a: np.ndarray, o: np.ndarray, phi_warped: np.ndarray, is_joint_2: bool = False) -> np.ndarray:
     if not is_joint_2:
-        # Eq 4: a * cos(phi) + o [cite: 156]
+        # eq 4 for joint 0, 1
         return a * np.cos(phi_warped) + o
     else:
-        # Eq 10: a * F_gamma(phi) + o [cite: 167]
+        # eq 8 for joint 2
         return a * phi_warped + o
 
 

@@ -18,24 +18,12 @@ class BaseEA(ABC):
 		pass
 
 	@abstractmethod
+	def evaluate_population(self):
+		pass
+
+	@abstractmethod
 	def create_offspring(self):
 		pass
-
-	@abstractmethod
-	def calculate_fitness(self, chromosome):
-		pass
-
-	@abstractmethod
-	def select_to_kill(self):
-		"""Return the integer index of the individual selected for replacement."""
-		pass
-
-	def evaluate_population(self):
-		if self.chromosomes is None:
-			raise ValueError("Population must be initialized before evaluation.")
-		self.curr_fitness = np.array(
-			[self.calculate_fitness(chromosome) for chromosome in self.chromosomes]
-		)
 
 	def best_index(self):
 		if self.curr_fitness is None:
@@ -47,26 +35,26 @@ class BaseEA(ABC):
 		best_idx = self.best_index()
 		return self.chromosomes[best_idx], self.curr_fitness[best_idx]
 
-	def validate_index(self, idx, source_name):
-		if isinstance(idx, np.generic):
-			idx = int(idx)
+	# def validate_index(self, idx, source_name):
+	# 	if isinstance(idx, np.generic):
+	# 		idx = int(idx)
 
-		if not isinstance(idx, int):
-			raise TypeError(f"{source_name} must return an integer index, got {type(idx).__name__}.")
+	# 	if not isinstance(idx, int):
+	# 		raise TypeError(f"{source_name} must return an integer index, got {type(idx).__name__}.")
 
-		if idx < 0 or idx >= self.population_size:
-			raise IndexError(
-				f"{source_name} returned index {idx}, but valid indices are 0 to {self.population_size - 1}."
-			)
+	# 	if idx < 0 or idx >= self.population_size:
+	# 		raise IndexError(
+	# 			f"{source_name} returned index {idx}, but valid indices are 0 to {self.population_size - 1}."
+	# 		)
 
-		return idx
+	# 	return idx
 
 	def _ensure_initialized(self):
 		if self.chromosomes is None:
 			self.initialize_population()
 
 		if self.chromosomes is None:
-			raise ValueError("initialize_population() must set self.chromosomes.")
+			raise ValueError("initialize_population() must set self.chromosomes")
 
 		if len(self.chromosomes) != self.population_size:
 			raise ValueError("Population size does not match self.population_size.")
