@@ -57,6 +57,9 @@ class QuadrupedEA(BaseEA):
         termination_count = 0
         # select different schemes
         survival_selector = self.truncation_selection 
+        
+        history_best = []
+        history_avg = []
 
         for gen in range(num_generations):
             print(f"\n{'='*40}\n GENERATION {gen:03d} \n{'='*40}")
@@ -86,10 +89,15 @@ class QuadrupedEA(BaseEA):
             self.population_size = original_pop_size
             self.chromosomes = combined_population[survivor_indices]
             self.curr_fitness = combined_fitness[survivor_indices]
+            
+            # record generation metrics
+            _, curr_best = self.best_solution()
+            curr_avg = float(np.mean(self.curr_fitness))
+            
+            history_best.append(float(curr_best))
+            history_avg.append(curr_avg)
 
             # logging
-            _, curr_best = self.best_solution()
-
             improved = curr_best < best_ever_fitness if self.minimize else curr_best > best_ever_fitness
             
             if improved:
@@ -115,6 +123,14 @@ class QuadrupedEA(BaseEA):
                 break
 
             print(f"Gen {gen}: Current Best Fitness = {curr_best:.4f} | Overall Best = {best_ever_fitness:.4f}")
+            
+        history_filepath = "results/fitness_history.json"
+        with open(history_filepath, "w") as f:
+            json.dump({
+                "best_fitness": history_best,
+                "avg_fitness": history_avg
+            }, f, indent=4)
+        print(f"\nEvolution Complete! Fitness history saved to {history_filepath}")
 
         return self.best_solution()
 

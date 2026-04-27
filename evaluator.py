@@ -76,7 +76,9 @@ def simulate_universe(args: tuple) -> float:
         omega = 0.25 # constant in the paper
         
         # actual amplitude, offset and phase variables
-        c_phi_0 = np.zeros(4)
+        target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
+        c_phi_0 = target_offsets.copy()
+        
         c_a0, c_o0 = np.zeros(4), np.zeros(4)
         c_a1, c_o1 = np.zeros(4), np.zeros(4)
         c_a2_1, c_a2_2, c_o2 = np.zeros(4), np.zeros(4), np.zeros(4)
@@ -184,7 +186,9 @@ def visualize_genome(genome: np.ndarray, sim_time: float = 20.0, robot_id: int =
     omega = 0.25 # constant in the paper
     
     # actual amplitude, offset and phase variables for the 4 legs (BL, BR, FL, FR)
-    c_phi_0 = np.zeros(4)
+    target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
+    c_phi_0 = target_offsets.copy()
+    
     c_a0, c_o0 = np.zeros(4), np.zeros(4)
     c_a1, c_o1 = np.zeros(4), np.zeros(4)
     c_a2_1, c_a2_2, c_o2 = np.zeros(4), np.zeros(4), np.zeros(4)
@@ -225,7 +229,7 @@ def visualize_genome(genome: np.ndarray, sim_time: float = 20.0, robot_id: int =
 
             # amplitude selection for joint 2 and spline filter
             phi_2_2pi = np.mod(phi_2_w, 2 * np.pi) # selecting amplitude based on F_l filter from prev
-            c_a2 = np.where(phi_2_2pi < np.pi, c_a2_1, c_a2_2) 
+            c_a2 = np.where(phi_2_2pi < np.pi, c_a2_1, c_a2_2) # switch between swing and stance amplitude
             phi_2_spline = cpg_core.apply_spline_filter(phi_2_w)
 
             theta_0 = cpg_core.compute_target_angles(c_a0, c_o0, phi_0_w, False)
