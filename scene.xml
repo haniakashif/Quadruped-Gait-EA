@@ -24,13 +24,13 @@
         <geom name="terrain_geom" type="hfield" hfield="rough_terrain" pos="0 3.7 0" friction="0.7 0.005 0.0001" contype="1" conaffinity="1" rgba="0 0 0 0"/>
         <geom name="terrain_visual" type="hfield" hfield="rough_terrain" pos="0 3.7 0" group="1" contype="0" conaffinity="0" rgba="0.6 0.5 0.4 1"/>
         
-        <geom name="wall_back" type="box" pos="0 -0.3 0.5" size="0.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        <geom name="wall_back" type="box" pos="0 -0.3 0.5" size="0.5 0.05 1" rgba="0 0 0 0" group="1" contype="1" conaffinity="1"/>
         
-        <geom name="wall_front" type="box" pos="0 7.7 0.5" size="0.5 0.05 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        <geom name="wall_front" type="box" pos="0 7.7 0.5" size="0.5 0.05 1" rgba="0 0 0 0" group="1" contype="1" conaffinity="1"/>
         
-        <geom name="wall_left" type="box" pos="-0.5 3.7 0.5" size="0.05 4 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        <geom name="wall_left" type="box" pos="-0.5 3.7 0.5" size="0.05 4 1" rgba="0 0 0 0" group="1" contype="1" conaffinity="1"/>
         
-        <geom name="wall_right" type="box" pos="0.5 3.7 0.5" size="0.05 4 1" rgba="0.2 0.5 0.8 0.2" group="1" contype="1" conaffinity="1"/>
+        <geom name="wall_right" type="box" pos="0.5 3.7 0.5" size="0.05 4 1" rgba="0 0 0 0" group="1" contype="1" conaffinity="1"/>
         
     </worldbody>
 

@@ -50,7 +50,7 @@ class QuadrupedEA(BaseEA):
         # ensure bounds
         return np.clip(child, 0.0, 1.0)
     
-    def run_loop(self, num_generations, patience=15):
+    def run_loop(self, num_generations, patience=50):
         self._ensure_initialized()
 
         _, best_ever_fitness = self.best_solution()
@@ -139,11 +139,11 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=5, 
+        population_size=30, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
         mutation_rate=0.05, 
         num_offspring=5,
-        visual_mode=True
+        visual_mode=False
     )
     
-    ea.run_loop(num_generations=2)
+    ea.run_loop(num_generations=1000)

@@ -94,7 +94,7 @@ def simulate_universe(args: tuple) -> float:
         
         # static phase offsets for leg
         target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
-        max_sim_time = 20.0
+        max_sim_time = 200.0
         
         while data.time <= max_sim_time:
             # derivative updates for smooth stage change (eq 1, 2, 5, 6, 7)
@@ -165,7 +165,7 @@ def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.nda
     return np.array(fitness_scores)
 
 
-def visualize_genome(genome: np.ndarray, sim_time: float = 20.0, robot_id: int = 0) -> float:
+def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> float:
     """
     Renders a single genome in a MuJoCo GUI window, calculates fitness, closes the window, and returns the score to the EA.
     """

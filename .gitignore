@@ -1,4 +1,5 @@
 venv/
+results/
 
 # Python Cache
 __pycache__/
