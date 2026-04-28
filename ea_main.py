@@ -5,9 +5,8 @@ from base_EA import BaseEA
 import evaluator
 
 class QuadrupedEA(BaseEA):
-    def __init__(self, population_size, minimize, mutation_rate, num_offspring, visual_mode):
-        super().__init__(population_size, minimize, mutation_rate, num_offspring, visual_mode)
-        # i dont think num_offsprings is being used, do i remove it?
+    def __init__(self, population_size, minimize, mutation_rate, visual_mode):
+        super().__init__(population_size, minimize, mutation_rate, visual_mode)
         self.num_params = 12 # CPG parameters
 
     def initialize_population(self):
@@ -60,6 +59,8 @@ class QuadrupedEA(BaseEA):
         
         history_best = []
         history_avg = []
+        best_params_history = []
+        params_filepath = "results/best_params_history.json"
 
         for gen in range(num_generations):
             print(f"\n{'='*40}\n GENERATION {gen:03d} \n{'='*40}")
@@ -72,7 +73,7 @@ class QuadrupedEA(BaseEA):
                 print("Evaluating offspring batch visually...")
                 offspring_fitnesses = evaluator.run_visual_sequential(offspring_batch)
             else:
-                print("Evaluating offspring batch in headless...")
+                # print("Evaluating offspring batch in headless...")
                 offspring_fitnesses = evaluator.run_headless_pool(offspring_batch)
             
             # combine for big pool
@@ -110,11 +111,17 @@ class QuadrupedEA(BaseEA):
                 clean_params = {k: float(v) for k, v in best_cpg_params.items()}
                 
                 # saving best results
-                filepath = f"results/gen_{gen:03d}_best.json"
-                with open(filepath, "w") as f:
-                    json.dump(clean_params, f, indent=4)
+                best_params_history.append({
+                    "generation": gen,
+                    "fitness": float(curr_best),
+                    "parameters": clean_params
+                })
                 
-                print(f"New Best Fitness: {curr_best:.4f} (Saved parameters to {filepath})")
+                # Overwrite the single tracking file
+                with open(params_filepath, "w") as f:
+                    json.dump(best_params_history, f, indent=4)
+                
+                print(f"New Best Fitness: {curr_best:.4f} (Appended parameters to {params_filepath})")
             else:
                 termination_count += 1
 
@@ -130,8 +137,8 @@ class QuadrupedEA(BaseEA):
                 "best_fitness": history_best,
                 "avg_fitness": history_avg
             }, f, indent=4)
-        print(f"\nEvolution Complete! Fitness history saved to {history_filepath}")
-
+            
+        print(f"\nEvolution Complete! Full history safely logged to {history_filepath}")
         return self.best_solution()
 
 
@@ -139,11 +146,10 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=30, 
+        population_size=2, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
-        mutation_rate=0.05, 
-        num_offspring=5,
+        mutation_rate=0.05,
         visual_mode=False
     )
     
-    ea.run_loop(num_generations=1000)
+    ea.run_loop(num_generations=5, patience=50)

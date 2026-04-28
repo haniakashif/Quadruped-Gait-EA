@@ -3,14 +3,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class BaseEA(ABC):
-	def __init__(self, population_size, minimize, mutation_rate, num_offspring, visual_mode):
+	def __init__(self, population_size, minimize, mutation_rate, visual_mode):
 		self.population_size = population_size
 		self.minimize = minimize
 		self.chromosomes = None
 		self.curr_fitness = None
 		self.mutation_rate = mutation_rate
 		self.visual_mode = visual_mode
-		self.num_offspring = num_offspring
 
 	# Problem-specific
 	@abstractmethod
@@ -34,20 +33,6 @@ class BaseEA(ABC):
 	def best_solution(self):
 		best_idx = self.best_index()
 		return self.chromosomes[best_idx], self.curr_fitness[best_idx]
-
-	# def validate_index(self, idx, source_name):
-	# 	if isinstance(idx, np.generic):
-	# 		idx = int(idx)
-
-	# 	if not isinstance(idx, int):
-	# 		raise TypeError(f"{source_name} must return an integer index, got {type(idx).__name__}.")
-
-	# 	if idx < 0 or idx >= self.population_size:
-	# 		raise IndexError(
-	# 			f"{source_name} returned index {idx}, but valid indices are 0 to {self.population_size - 1}."
-	# 		)
-
-	# 	return idx
 
 	def _ensure_initialized(self):
 		if self.chromosomes is None:
@@ -131,46 +116,4 @@ class BaseEA(ABC):
 		)
 		return parents_idx.tolist()
 
-	# Common EA loop
-	def run_loop(self, num_generations, patience=15000):
-		self._ensure_initialized()
-
-		_, best_ever_fitness = self.best_solution()
-		termination_count = 0
-
-		for gen in range(num_generations):
-			for _ in range(self.num_offspring):
-				new_child = self.create_offspring()
-				new_child_fitness = self.calculate_fitness(new_child)
-
-				kill_idx = self.validate_index(self.select_to_kill(), "select_to_kill()")
-
-				if self.minimize:
-					should_replace = new_child_fitness < self.curr_fitness[kill_idx]
-				else:
-					should_replace = new_child_fitness > self.curr_fitness[kill_idx]
-
-				if should_replace:
-					self.chromosomes[kill_idx] = new_child
-					self.curr_fitness[kill_idx] = new_child_fitness
-
-			_, curr_best = self.best_solution()
-
-			improved = curr_best < best_ever_fitness if self.minimize else curr_best > best_ever_fitness
-			if improved:
-				best_ever_fitness = curr_best
-				termination_count = 0
-			else:
-				termination_count += 1
-
-			if termination_count >= patience:
-				print(
-					f"Terminating at generation {gen} due to no improvement in {patience} generations."
-				)
-				break
-
-			if gen % 1000 == 0:
-				label = "Best Dist" if self.minimize else "Best Fitness"
-				print(f"Gen {gen}: {label} = {curr_best:.2f}")
-
-		return self.best_solution()
+	

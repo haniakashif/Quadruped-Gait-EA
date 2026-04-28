@@ -33,7 +33,7 @@ def decode_genome(genome: np.ndarray) -> dict:
 
 
 def generate_blocky_terrain(nrow, ncol):
-    print(f"Generating Terrain ...")
+    # print(f"Generating Terrain ...")
     terrain = np.zeros((nrow, ncol))
     
     zone1_end = nrow // 3      
@@ -94,9 +94,9 @@ def simulate_universe(args: tuple) -> float:
         
         # static phase offsets for leg
         target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
-        max_sim_time = 200.0
+        sim_time = 200.0
         
-        while data.time <= max_sim_time:
+        while data.time <= sim_time:
             # derivative updates for smooth stage change (eq 1, 2, 5, 6, 7)
             c_a0 = cpg_core.update_state_variables(c_a0, t_a0, params['gamma'], dt)
             c_o0 = cpg_core.update_state_variables(c_o0, t_o0, params['gamma'], dt)

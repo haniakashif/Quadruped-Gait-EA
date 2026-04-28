@@ -1,5 +1,6 @@
 venv/
 results/
+results.txt
 
 # Python Cache
 __pycache__/
