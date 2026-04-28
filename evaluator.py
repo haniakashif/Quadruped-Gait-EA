@@ -11,12 +11,15 @@ os.environ["GDK_BACKEND"] = "x11"
 os.environ["XDG_SESSION_TYPE"] = "x11"
 
 HEIGHT_PENALTY_WEIGHT = 1.5
-SETTLE_STEPS = 100
+TARGET_Z_HEIGHT = 0.09
 _FLAT_GROUND_BASE_HEIGHT = None
 
 
-def get_flat_ground_base_height(xml_path: str, settle_steps: int = SETTLE_STEPS) -> float:
-    global _FLAT_GROUND_BASE_HEIGHT
+def get_flat_ground_base_height(xml_path: str, settle_steps: int = 100) -> float:
+    global _FLAT_GROUND_BASE_HEIGHT, TARGET_Z_HEIGHT
+    
+    if TARGET_Z_HEIGHT is not None:
+        return TARGET_Z_HEIGHT
 
     if _FLAT_GROUND_BASE_HEIGHT is not None:
         return _FLAT_GROUND_BASE_HEIGHT
@@ -141,7 +144,7 @@ def simulate_universe(args: tuple):
         
         # static phase offsets for leg
         target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
-        sim_time = 200.0
+        sim_time = 150.0
         
         while data.time <= sim_time:
             # derivative updates for smooth stage change (eq 1, 2, 5, 6, 7)
@@ -186,7 +189,8 @@ def simulate_universe(args: tuple):
             height_samples += 1
             
             current_y = float(data.body("base_link").xpos[1])
-            if current_y >= 7.5:  # if robot has reached near end of terrain
+            if current_y >= 7.2:  # if robot has reached near end of terrain
+                print(f"Reached end of terrain at time {data.time:.2f}s, Y={current_y:.4f}m. Ending simulation.")
                 break
                 
         # evaluating fitness
@@ -227,8 +231,14 @@ def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.nda
     
     tasks = [(i, lock, population[i]) for i in range(len(population))]
     
-    with mp.Pool(processes=max_workers) as pool:
-        results = pool.map(simulate_universe, tasks)
+    try:
+        with mp.Pool(processes=max_workers) as pool:
+            results = pool.map(simulate_universe, tasks)
+    except KeyboardInterrupt:
+        print("\n[!] Ctrl+C detected. Forcefully killing all MuJoCo worker threads...")
+        pool.terminate()
+        pool.join()
+        exit(1)
 
     results.sort(key=lambda item: item[0])
     for robot_id, fitness, final_dx, final_dy, mean_height_deviation, failed, error in results:
@@ -333,7 +343,8 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
             height_samples += 1
             
             current_y = float(data.body("base_link").xpos[1])
-            if current_y >= 7.5:  # if robot has reached near end of terrain
+            if current_y >= 7.2:  # if robot has reached near end of terrain
+                print(f"Reached end of terrain at time {data.time:.2f}s, Y={current_y:.4f}m. Ending simulation.")
                 break
             
             viewer.sync()
@@ -372,7 +383,7 @@ def run_visual_sequential(population: np.ndarray) -> np.ndarray:
     metrics = []
     for i, genome in enumerate(population):
         print(f"Launching Viewer for Robot {i}/{len(population)} ...")
-        fit, dy, dx, h_dev = visualize_genome(genome, sim_time=200, robot_id=i)
+        fit, dy, dx, h_dev = visualize_genome(genome, sim_time=150, robot_id=i)
         
         fitness_scores.append(fit)
         metrics.append([dy, dx, h_dev])

@@ -50,7 +50,7 @@ class QuadrupedEA(BaseEA):
         # ensure bounds
         return np.clip(child, 0.0, 1.0)
     
-    def inject_diversity(self, replace_fraction=0.25):
+    def inject_diversity(self, replace_fraction):
         num_replace = max(1, int(self.population_size * replace_fraction))
 
         # replace the worst individuals, keep the best ones intact.

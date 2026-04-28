@@ -112,7 +112,8 @@ def run_validation(params: dict, sim_time: float):
             mujoco.mj_step(model, data)
             
             current_y = float(data.body("base_link").xpos[1])
-            if current_y >= 7.5:  # if robot has reached near end of terrain
+            if current_y >= 7.2:  # if robot has reached near end of terrain
+                print(f"Reached end of terrain at time {data.time:.2f}s, Y={current_y:.4f}m. Ending simulation.")
                 break
             
             viewer.sync()
@@ -156,4 +157,4 @@ if __name__ == "__main__":
         "mu_o2": 0.9285177198418544
     }
     
-    run_validation(optimized_params, sim_time=200.0)
+    run_validation(optimized_params, sim_time=150.0)
