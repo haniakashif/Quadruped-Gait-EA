@@ -65,6 +65,10 @@ class BaseEA(ABC):
 		if len(self.curr_fitness) != self.population_size:
 			raise ValueError("Fitness array size does not match self.population_size.")
 
+	def population_diversity(self):
+		# Mean per-gene standard deviation across the population.
+		return float(np.mean(np.std(self.chromosomes, axis=0)))
+
 	# selection operators
 	def random_selection(self, k):
 		return np.random.choice(np.arange(self.population_size), size=k, replace=False).tolist()
