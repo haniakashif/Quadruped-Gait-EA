@@ -110,6 +110,11 @@ def run_validation(params: dict, sim_time: float):
             
             # Step physics and render
             mujoco.mj_step(model, data)
+            
+            current_y = float(data.body("base_link").xpos[1])
+            if current_y >= 7.5:  # if robot has reached near end of terrain
+                break
+            
             viewer.sync()
             
             # Clock synchronization
@@ -137,18 +142,18 @@ def run_validation(params: dict, sim_time: float):
 if __name__ == "__main__":
     # Your optimized parameters extracted from the JSON output
     optimized_params = {
-        "gamma": 0.4366072853760319,
-        "duty_cycle": 0.6831063422956241,
-        "coupling_w": 1.2382489322537358,
-        "mu_r0": 0.5744139650554527,
-        "mu_o0": -0.20508986741261034,
-        "psi_1": 0.23755152260925955,
-        "mu_r1": 0.2471750831292964,
-        "mu_o1": 0.6361297713864255,
-        "psi_2": 0.12393590935342069,
-        "mu_r2_1": 0.7,
-        "mu_r2_2": 0.0,
-        "mu_o2": 0.8502197101284521
+        "gamma": 0.2690289520197321,
+        "duty_cycle": 0.4159379484227073,
+        "coupling_w": 1.6888281411341333,
+        "mu_r0": 0.5521795829795618,
+        "mu_o0": -0.1912547790472121,
+        "psi_1": 0.5905838181501133,
+        "mu_r1": 0.24336918160879803,
+        "mu_o1": 0.6785395364358062,
+        "psi_2": -0.31225853349577243,
+        "mu_r2_1": 0.6549897225241231,
+        "mu_r2_2": 0.012523232007225537,
+        "mu_o2": 0.9285177198418544
     }
     
     run_validation(optimized_params, sim_time=200.0)

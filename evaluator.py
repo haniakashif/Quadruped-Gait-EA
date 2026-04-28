@@ -184,6 +184,10 @@ def simulate_universe(args: tuple):
             current_height = float(data.body("base_link").xpos[2])
             height_deviation_sum += abs(current_height - flat_ground_height)
             height_samples += 1
+            
+            current_y = float(data.body("base_link").xpos[1])
+            if current_y >= 7.5:  # if robot has reached near end of terrain
+                break
                 
         # evaluating fitness
         final_dx = data.body("base_link").xpos[0] - initial_pos[0]
@@ -327,6 +331,11 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
             current_height = float(data.body("base_link").xpos[2])
             height_deviation_sum += abs(current_height - flat_ground_height)
             height_samples += 1
+            
+            current_y = float(data.body("base_link").xpos[1])
+            if current_y >= 7.5:  # if robot has reached near end of terrain
+                break
+            
             viewer.sync()
             
             time_until_next_step = dt - (time.time() - step_start)

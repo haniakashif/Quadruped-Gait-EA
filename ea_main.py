@@ -83,7 +83,7 @@ class QuadrupedEA(BaseEA):
     def population_diversity(self) -> float:
         return float(np.mean(np.std(self.chromosomes, axis=0)))
 
-    def run_loop(self, num_generations, patience=50):
+    def run_loop(self, num_generations, patience):
         self._ensure_initialized()
 
         _, best_ever_fitness = self.best_solution()
