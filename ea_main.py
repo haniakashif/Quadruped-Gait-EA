@@ -49,13 +49,46 @@ class QuadrupedEA(BaseEA):
         # ensure bounds
         return np.clip(child, 0.0, 1.0)
     
+    def inject_diversity(self, replace_fraction=0.25):
+        num_replace = max(1, int(self.population_size * replace_fraction))
+
+        # Replace the worst individuals, keep the best ones intact.
+        sorted_indices = np.argsort(self.curr_fitness)
+        if not self.minimize:
+            sorted_indices = sorted_indices[::-1]
+
+        worst_indices = sorted_indices[-num_replace:]
+
+        new_genomes = np.random.uniform(
+            low=0.0,
+            high=1.0,
+            size=(num_replace, self.num_params),
+        )
+
+        if self.visual_mode:
+            new_fitness = evaluator.run_visual_sequential(new_genomes)
+        else:
+            new_fitness = evaluator.run_headless_pool(new_genomes)
+
+        self.chromosomes[worst_indices] = new_genomes
+        self.curr_fitness[worst_indices] = new_fitness
+
+        print(
+            f"Diversity injection: replaced {num_replace} individuals "
+            f"(population diversity was low)."
+        )    
+
+    def population_diversity(self) -> float:
+        return float(np.mean(np.std(self.chromosomes, axis=0)))
+
     def run_loop(self, num_generations, patience=50):
         self._ensure_initialized()
 
         _, best_ever_fitness = self.best_solution()
         termination_count = 0
         # select different schemes
-        survival_selector = self.truncation_selection 
+        survival_selector = self.rank_based 
+        diversity_threshold = 0.04
         
         history_best = []
         history_avg = []
@@ -90,6 +123,12 @@ class QuadrupedEA(BaseEA):
             self.population_size = original_pop_size
             self.chromosomes = combined_population[survivor_indices]
             self.curr_fitness = combined_fitness[survivor_indices]
+
+            diversity = self.population_diversity()
+            if diversity < diversity_threshold:
+                self.inject_diversity(replace_fraction=0.25)
+                diversity = self.population_diversity()
+            print(f"Gen {gen}: Diversity = {diversity:.4f}")
             
             # record generation metrics
             _, curr_best = self.best_solution()

@@ -10,6 +10,29 @@ import cpg_core
 os.environ["GDK_BACKEND"] = "x11" 
 os.environ["XDG_SESSION_TYPE"] = "x11"
 
+HEIGHT_PENALTY_WEIGHT = 1.5
+SETTLE_STEPS = 100
+_FLAT_GROUND_BASE_HEIGHT = None
+
+
+def get_flat_ground_base_height(xml_path: str, settle_steps: int = SETTLE_STEPS) -> float:
+    global _FLAT_GROUND_BASE_HEIGHT
+
+    if _FLAT_GROUND_BASE_HEIGHT is not None:
+        return _FLAT_GROUND_BASE_HEIGHT
+
+    model = mujoco.MjModel.from_xml_path(xml_path)
+    model.hfield_data[:] = 0.0
+
+    data = mujoco.MjData(model)
+    data.ctrl[:] = 0.0
+
+    for _ in range(settle_steps):
+        mujoco.mj_step(model, data)
+
+    _FLAT_GROUND_BASE_HEIGHT = float(data.body("base_link").xpos[2])
+    return _FLAT_GROUND_BASE_HEIGHT
+
 def decode_genome(genome: np.ndarray) -> dict:
     return {
         # all params as per paper
@@ -32,8 +55,21 @@ def decode_genome(genome: np.ndarray) -> dict:
     }
 
 
-def generate_blocky_terrain(nrow, ncol):
-    # print(f"Generating Terrain ...")
+def format_result_log(robot_id: int, dy: float, dx: float, height_dev: float, fitness: float, failed: bool = False, error: str = "") -> str:
+    status = "FAILED" if failed else "Finished"
+    message = (
+        f"    [Robot {robot_id:02d}] {status}. "
+        f"Travel(Y): {dy:.3f}m | Drift(X): {dx:.3f}m | "
+        f"Height Deviation (Z): {height_dev:.3f}m | Fitness: {fitness:.3f}"
+    )
+    if error:
+        message += f" | Error: {error}"
+    return message
+
+
+def generate_blocky_terrain(nrow, ncol, verbose=True):
+    if verbose:
+        print("Generating Terrain ...")
     terrain = np.zeros((nrow, ncol))
     
     zone1_end = nrow // 3      
@@ -54,22 +90,33 @@ def generate_blocky_terrain(nrow, ncol):
     return terrain.flatten()
 
 
-def simulate_universe(args: tuple) -> float:
+def simulate_universe(args: tuple):
     robot_id, lock, genome = args
     
     try:
         params = decode_genome(genome)
         
         xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+        flat_ground_height = get_flat_ground_base_height(xml_path)
+
         with lock:
             model = mujoco.MjModel.from_xml_path(xml_path)
             
-        terrain_data = generate_blocky_terrain(nrow=model.hfield_nrow[0], ncol=model.hfield_ncol[0])
+        terrain_data = generate_blocky_terrain(
+            nrow=model.hfield_nrow[0],
+            ncol=model.hfield_ncol[0],
+            verbose=False,
+        )
         model.hfield_data[:] = terrain_data
         data = mujoco.MjData(model)
         
         mujoco.mj_step(model, data)
         initial_pos = data.body("base_link").xpos.copy()
+        height_deviation_sum = 0.0
+        height_samples = 0
+        current_height = float(data.body("base_link").xpos[2])
+        height_deviation_sum += abs(current_height - flat_ground_height)
+        height_samples += 1
         
         # CPG initialization
         dt = model.opt.timestep # integration timestep from XML
@@ -134,20 +181,37 @@ def simulate_universe(args: tuple) -> float:
             data.ctrl[:] = cpg_core.clamp_to_joint_limits(raw_angles)
 
             mujoco.mj_step(model, data)
+            current_height = float(data.body("base_link").xpos[2])
+            height_deviation_sum += abs(current_height - flat_ground_height)
+            height_samples += 1
                 
         # evaluating fitness
         final_dx = data.body("base_link").xpos[0] - initial_pos[0]
         final_dy = data.body("base_link").xpos[1] - initial_pos[1]
-        
-        drift_penalty_weight = 2.0 
-        fitness = final_dy - (drift_penalty_weight * abs(final_dx))
-        
-        return float(fitness)
+
+        drift_penalty_weight = 2.0
+        mean_height_deviation = (
+            height_deviation_sum / height_samples if height_samples > 0 else 0.0
+        )
+
+        fitness = (
+            final_dy
+            - (drift_penalty_weight * abs(final_dx))
+            - (HEIGHT_PENALTY_WEIGHT * mean_height_deviation)
+        )
+        return (
+            robot_id,
+            float(fitness),
+            float(final_dx),
+            float(final_dy),
+            float(mean_height_deviation),
+            False,
+            "",
+        )
         
     except Exception as e:
-        print(f"FAILED: Universe {robot_id:02d} threw an error: {e}")
         # heavily penalized score so unstable genomes are eliminated
-        return -999.0
+        return (robot_id, -999.0, 0.0, 0.0, 0.0, True, str(e))
 
 
 def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.ndarray:
@@ -160,8 +224,13 @@ def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.nda
     tasks = [(i, lock, population[i]) for i in range(len(population))]
     
     with mp.Pool(processes=max_workers) as pool:
-        fitness_scores = pool.map(simulate_universe, tasks)
-        
+        results = pool.map(simulate_universe, tasks)
+
+    results.sort(key=lambda item: item[0])
+    for robot_id, fitness, final_dx, final_dy, mean_height_deviation, failed, error in results:
+        print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness, failed, error))
+
+    fitness_scores = [result[1] for result in results]
     return np.array(fitness_scores)
 
 
@@ -172,14 +241,20 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
     params = decode_genome(genome)
     
     xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
+    flat_ground_height = get_flat_ground_base_height(xml_path)
     model = mujoco.MjModel.from_xml_path(xml_path)
         
-    terrain_data = generate_blocky_terrain(nrow=model.hfield_nrow[0], ncol=model.hfield_ncol[0])
+    terrain_data = generate_blocky_terrain(nrow=model.hfield_nrow[0], ncol=model.hfield_ncol[0], verbose=True)
     model.hfield_data[:] = terrain_data
     data = mujoco.MjData(model)
     
     mujoco.mj_step(model, data)
     initial_pos = data.body("base_link").xpos.copy()
+    height_deviation_sum = 0.0
+    height_samples = 0
+    current_height = float(data.body("base_link").xpos[2])
+    height_deviation_sum += abs(current_height - flat_ground_height)
+    height_samples += 1
     
     # CPG initialization
     dt = model.opt.timestep # integration timestep from XML
@@ -246,6 +321,9 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
             
             # advance physics
             mujoco.mj_step(model, data)
+            current_height = float(data.body("base_link").xpos[2])
+            height_deviation_sum += abs(current_height - flat_ground_height)
+            height_samples += 1
             viewer.sync()
             
             time_until_next_step = dt - (time.time() - step_start)
@@ -258,11 +336,19 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
     # evaluating fitness
     final_dx = data.body("base_link").xpos[0] - initial_pos[0]
     final_dy = data.body("base_link").xpos[1] - initial_pos[1]
+
+    drift_penalty_weight = 2.0
+    mean_height_deviation = (
+        height_deviation_sum / height_samples if height_samples > 0 else 0.0
+    )
+
+    fitness = (
+        final_dy
+        - (drift_penalty_weight * abs(final_dx))
+        - (HEIGHT_PENALTY_WEIGHT * mean_height_deviation)
+        )
     
-    drift_penalty_weight = 2.0 
-    fitness = final_dy - (drift_penalty_weight * abs(final_dx))
-    
-    print(f"    [Robot {robot_id:02d}] Finished. Travel(Y): {final_dy:.3f}m | Drift(X): {final_dx:.3f}m | Fitness: {fitness:.3f}")
+    print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness))
     
     return float(fitness)
 
