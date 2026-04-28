@@ -119,5 +119,3 @@ class BaseEA(ABC):
 			replace=False,
 		)
 		return parents_idx.tolist()
-
-	

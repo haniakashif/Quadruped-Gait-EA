@@ -231,7 +231,10 @@ def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.nda
         print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness, failed, error))
 
     fitness_scores = [result[1] for result in results]
-    return np.array(fitness_scores)
+    # [travel_y, drift_x, height_dev] for every robot
+    metrics = [[result[3], result[2], result[4]] for result in results]
+    
+    return np.array(fitness_scores), np.array(metrics)
 
 
 def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> float:
@@ -349,8 +352,7 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
         )
     
     print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness))
-    
-    return float(fitness)
+    return float(fitness), float(final_dy), float(final_dx), float(mean_height_deviation)
 
 
 def run_visual_sequential(population: np.ndarray) -> np.ndarray:
@@ -358,9 +360,12 @@ def run_visual_sequential(population: np.ndarray) -> np.ndarray:
     Evaluates the population one by one in a GUI window.
     """
     fitness_scores = []
+    metrics = []
     for i, genome in enumerate(population):
         print(f"Launching Viewer for Robot {i}/{len(population)} ...")
-        fit = visualize_genome(genome, sim_time=20.0, robot_id=i)
-        fitness_scores.append(fit)
+        fit, dy, dx, h_dev = visualize_genome(genome, sim_time=200, robot_id=i)
         
-    return np.array(fitness_scores)
+        fitness_scores.append(fit)
+        metrics.append([dy, dx, h_dev])
+        
+    return np.array(fitness_scores), np.array(metrics)
