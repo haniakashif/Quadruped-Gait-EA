@@ -106,4 +106,18 @@
       </body>
     </body>
   </body></worldbody>
-<actuator><position name="bl_hip_motor" joint="bl_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" /><position name="bl_knee_motor" joint="bl_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="bl_foot_motor" joint="bl_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="br_hip_motor" joint="br_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" /><position name="br_knee_motor" joint="br_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="br_foot_motor" joint="br_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="fl_hip_motor" joint="fl_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" /><position name="fl_knee_motor" joint="fl_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="fl_foot_motor" joint="fl_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="fr_hip_motor" joint="fr_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" /><position name="fr_knee_motor" joint="fr_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /><position name="fr_foot_motor" joint="fr_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" /></actuator></mujoco>
+  <actuator>
+    <position name="bl_hip_motor" joint="bl_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="bl_knee_motor" joint="bl_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="bl_foot_motor" joint="bl_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="br_hip_motor" joint="br_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="br_knee_motor" joint="br_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="br_foot_motor" joint="br_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fl_hip_motor" joint="fl_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fl_knee_motor" joint="fl_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fl_foot_motor" joint="fl_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fr_hip_motor" joint="fr_hip_joint" kp="5.0" kv="0.1" ctrlrange="-0.7853 0.7853" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fr_knee_motor" joint="fr_knee_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+    <position name="fr_foot_motor" joint="fr_foot_joint" kp="5.0" kv="0.1" ctrlrange="-1.5707 1.5707" forcerange="-0.9414 0.9414" ctrllimited="true" forcelimited="true"/>
+  </actuator>
+</mujoco>
