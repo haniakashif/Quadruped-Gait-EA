@@ -4,6 +4,7 @@ import numpy as np
 import mujoco
 import mujoco.viewer
 import cpg_core
+import evaluator
 
 # --- LINUX WAYLAND FIX ---
 # Forces GLFW to use X11 backend to prevent window destruction deadlocks
@@ -45,6 +46,8 @@ def run_validation(params: dict, sim_time: float):
     
     mujoco.mj_step(model, data)
     initial_pos = data.body("base_link").xpos.copy()
+    body_contact_steps = 0
+    total_steps = 0
     
     # --- CPG INITIALIZATION ---
     dt = model.opt.timestep
@@ -110,6 +113,9 @@ def run_validation(params: dict, sim_time: float):
             
             # Step physics and render
             mujoco.mj_step(model, data)
+            total_steps += 1
+            if evaluator.has_forbidden_terrain_contact(model, data):
+                body_contact_steps += 1
             
             current_y = float(data.body("base_link").xpos[1])
             if current_y >= 7.2:  # if robot has reached near end of terrain
@@ -128,6 +134,9 @@ def run_validation(params: dict, sim_time: float):
     # --- PERFORMANCE DIAGNOSTICS ---
     final_dx = data.body("base_link").xpos[0] - initial_pos[0]
     final_dy = data.body("base_link").xpos[1] - initial_pos[1]
+    body_contact_fraction = (
+        body_contact_steps / total_steps if total_steps > 0 else 0.0
+    )
     
     drift_penalty_weight = 2.0 
     fitness = final_dy - (drift_penalty_weight * abs(final_dx))
@@ -137,24 +146,24 @@ def run_validation(params: dict, sim_time: float):
     print("="*40)
     print(f"Forward Travel (Y): {final_dy:.4f} m")
     print(f"Lateral Drift (X):  {final_dx:.4f} m")
+    print(f"Forbidden Contacts: {body_contact_fraction:.2%}")
     print(f"Final Fitness:      {fitness:.4f}")
     print("="*40 + "\n")
 
 if __name__ == "__main__":
     # Your optimized parameters extracted from the JSON output
     optimized_params = {
-        "gamma": 0.2690289520197321,
-        "duty_cycle": 0.4159379484227073,
-        "coupling_w": 1.6888281411341333,
-        "mu_r0": 0.5521795829795618,
-        "mu_o0": -0.1912547790472121,
-        "psi_1": 0.5905838181501133,
-        "mu_r1": 0.24336918160879803,
-        "mu_o1": 0.6785395364358062,
-        "psi_2": -0.31225853349577243,
-        "mu_r2_1": 0.6549897225241231,
-        "mu_r2_2": 0.012523232007225537,
-        "mu_o2": 0.9285177198418544
-    }
-    
+            "gamma": 0.5856719874074847,
+            "duty_cycle": 0.7270699883339344,
+            "coupling_w": 0.24168708435108144,
+            "mu_r0": 0.5292500219118803,
+            "mu_o0": -0.14262269755239476,
+            "psi_1": 0.6283185307179586,
+            "mu_r1": 0.3,
+            "mu_o1": 0.4560414251906475,
+            "psi_2": -0.19567856204814416,
+            "mu_r2_1": 0.660510578283357,
+            "mu_r2_2": 0.020588593798199405,
+            "mu_o2": 0.8936517068076544
+        }
     run_validation(optimized_params, sim_time=150.0)

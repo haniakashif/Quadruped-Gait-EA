@@ -89,7 +89,7 @@ class QuadrupedEA(BaseEA):
         _, best_ever_fitness = self.best_solution()
         termination_count = 0
         # select different schemes
-        survival_selector = self.rank_based 
+        survival_selector = self.fitness_proportionate 
         diversity_threshold = 0.04
         
         history_best = []
@@ -210,10 +210,10 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=2, 
+        population_size=30, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
         mutation_rate=0.05,
         visual_mode=False
     )
     
-    ea.run_loop(num_generations=5, patience=50)
+    ea.run_loop(num_generations=200, patience=50)
