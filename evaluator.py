@@ -10,9 +10,21 @@ import cpg_core
 os.environ["GDK_BACKEND"] = "x11" 
 os.environ["XDG_SESSION_TYPE"] = "x11"
 
-HEIGHT_PENALTY_WEIGHT = 1.5
+HEIGHT_PENALTY_WEIGHT = 0.0
+BODY_CONTACT_PENALTY_WEIGHT = 5.0
 TARGET_Z_HEIGHT = 0.09
 _FLAT_GROUND_BASE_HEIGHT = None
+FORBIDDEN_TERRAIN_BODIES = {
+    "base_link",
+    "bl_hip",
+    "br_hip",
+    "fl_hip",
+    "fr_hip",
+    "bl_knee",
+    "br_knee",
+    "fl_knee",
+    "fr_knee",
+}
 
 
 def get_flat_ground_base_height(xml_path: str, settle_steps: int = 100) -> float:
@@ -58,16 +70,49 @@ def decode_genome(genome: np.ndarray) -> dict:
     }
 
 
-def format_result_log(robot_id: int, dy: float, dx: float, height_dev: float, fitness: float, failed: bool = False, error: str = "") -> str:
+def format_result_log(
+    robot_id: int,
+    dy: float,
+    dx: float,
+    height_dev: float,
+    body_contact_fraction: float,
+    fitness: float,
+    failed: bool = False,
+    error: str = "",
+) -> str:
     status = "FAILED" if failed else "Finished"
     message = (
         f"    [Robot {robot_id:02d}] {status}. "
         f"Travel(Y): {dy:.3f}m | Drift(X): {dx:.3f}m | "
-        f"Height Deviation (Z): {height_dev:.3f}m | Fitness: {fitness:.3f}"
+        f"Forbidden Contacts: {body_contact_fraction:.2%} | Fitness: {fitness:.3f}"
     )
     if error:
         message += f" | Error: {error}"
     return message
+
+
+def has_forbidden_terrain_contact(model: mujoco.MjModel, data: mujoco.MjData) -> bool:
+    for i in range(data.ncon):
+        contact = data.contact[i]
+        geom1_id = int(np.asarray(contact.geom1).item())
+        geom2_id = int(np.asarray(contact.geom2).item())
+
+        geom1 = model.geom(geom1_id)
+        geom2 = model.geom(geom2_id)
+
+        geom1_body_id = int(np.asarray(geom1.bodyid).item())
+        geom2_body_id = int(np.asarray(geom2.bodyid).item())
+        geom1_body = model.body(geom1_body_id).name
+        geom2_body = model.body(geom2_body_id).name
+
+        is_forbidden_terrain_contact = (
+            (geom1_body in FORBIDDEN_TERRAIN_BODIES and geom2.name == "terrain_geom")
+            or (geom2_body in FORBIDDEN_TERRAIN_BODIES and geom1.name == "terrain_geom")
+        )
+        if is_forbidden_terrain_contact:
+            return True
+
+    return False
 
 
 def generate_blocky_terrain(nrow, ncol, verbose=True):
@@ -117,6 +162,8 @@ def simulate_universe(args: tuple):
         initial_pos = data.body("base_link").xpos.copy()
         height_deviation_sum = 0.0
         height_samples = 0
+        body_contact_steps = 0
+        total_steps = 0
         current_height = float(data.body("base_link").xpos[2])
         height_deviation_sum += abs(current_height - flat_ground_height)
         height_samples += 1
@@ -184,6 +231,9 @@ def simulate_universe(args: tuple):
             data.ctrl[:] = cpg_core.clamp_to_joint_limits(raw_angles)
 
             mujoco.mj_step(model, data)
+            total_steps += 1
+            if has_forbidden_terrain_contact(model, data):
+                body_contact_steps += 1
             current_height = float(data.body("base_link").xpos[2])
             height_deviation_sum += abs(current_height - flat_ground_height)
             height_samples += 1
@@ -201,11 +251,15 @@ def simulate_universe(args: tuple):
         mean_height_deviation = (
             height_deviation_sum / height_samples if height_samples > 0 else 0.0
         )
+        body_contact_fraction = (
+            body_contact_steps / total_steps if total_steps > 0 else 0.0
+        )
 
         fitness = (
             final_dy
             - (drift_penalty_weight * abs(final_dx))
             - (HEIGHT_PENALTY_WEIGHT * mean_height_deviation)
+            - (BODY_CONTACT_PENALTY_WEIGHT * body_contact_fraction)
         )
         return (
             robot_id,
@@ -213,13 +267,14 @@ def simulate_universe(args: tuple):
             float(final_dx),
             float(final_dy),
             float(mean_height_deviation),
+            float(body_contact_fraction),
             False,
             "",
         )
         
     except Exception as e:
         # heavily penalized score so unstable genomes are eliminated
-        return (robot_id, -999.0, 0.0, 0.0, 0.0, True, str(e))
+        return (robot_id, -999.0, 0.0, 0.0, 0.0, 0.0, True, str(e))
 
 
 def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.ndarray:
@@ -241,12 +296,12 @@ def run_headless_pool(population: np.ndarray, max_workers: int = None) -> np.nda
         exit(1)
 
     results.sort(key=lambda item: item[0])
-    for robot_id, fitness, final_dx, final_dy, mean_height_deviation, failed, error in results:
-        print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness, failed, error))
+    for robot_id, fitness, final_dx, final_dy, mean_height_deviation, body_contact_fraction, failed, error in results:
+        print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, body_contact_fraction, fitness, failed, error))
 
     fitness_scores = [result[1] for result in results]
-    # [travel_y, drift_x, height_dev] for every robot
-    metrics = [[result[3], result[2], result[4]] for result in results]
+    # [travel_y, drift_x, height_dev, body_contact_fraction] for every robot
+    metrics = [[result[3], result[2], result[4], result[5]] for result in results]
     
     return np.array(fitness_scores), np.array(metrics)
 
@@ -269,6 +324,8 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
     initial_pos = data.body("base_link").xpos.copy()
     height_deviation_sum = 0.0
     height_samples = 0
+    body_contact_steps = 0
+    total_steps = 0
     current_height = float(data.body("base_link").xpos[2])
     height_deviation_sum += abs(current_height - flat_ground_height)
     height_samples += 1
@@ -338,6 +395,9 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
             
             # advance physics
             mujoco.mj_step(model, data)
+            total_steps += 1
+            if has_forbidden_terrain_contact(model, data):
+                body_contact_steps += 1
             current_height = float(data.body("base_link").xpos[2])
             height_deviation_sum += abs(current_height - flat_ground_height)
             height_samples += 1
@@ -364,15 +424,19 @@ def visualize_genome(genome: np.ndarray, sim_time: float, robot_id: int = 0) -> 
     mean_height_deviation = (
         height_deviation_sum / height_samples if height_samples > 0 else 0.0
     )
+    body_contact_fraction = (
+        body_contact_steps / total_steps if total_steps > 0 else 0.0
+    )
 
     fitness = (
         final_dy
         - (drift_penalty_weight * abs(final_dx))
         - (HEIGHT_PENALTY_WEIGHT * mean_height_deviation)
+        - (BODY_CONTACT_PENALTY_WEIGHT * body_contact_fraction)
         )
     
-    print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, fitness))
-    return float(fitness), float(final_dy), float(final_dx), float(mean_height_deviation)
+    print(format_result_log(robot_id, final_dy, final_dx, mean_height_deviation, body_contact_fraction, fitness))
+    return float(fitness), float(final_dy), float(final_dx), float(mean_height_deviation), float(body_contact_fraction)
 
 
 def run_visual_sequential(population: np.ndarray) -> np.ndarray:
@@ -383,9 +447,9 @@ def run_visual_sequential(population: np.ndarray) -> np.ndarray:
     metrics = []
     for i, genome in enumerate(population):
         print(f"Launching Viewer for Robot {i}/{len(population)} ...")
-        fit, dy, dx, h_dev = visualize_genome(genome, sim_time=150, robot_id=i)
+        fit, dy, dx, h_dev, body_contact_fraction = visualize_genome(genome, sim_time=150, robot_id=i)
         
         fitness_scores.append(fit)
-        metrics.append([dy, dx, h_dev])
+        metrics.append([dy, dx, h_dev, body_contact_fraction])
         
     return np.array(fitness_scores), np.array(metrics)
