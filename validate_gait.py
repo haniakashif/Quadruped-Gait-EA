@@ -149,6 +149,7 @@ def run_validation(params: dict, sim_time: float):
     print(f"Forbidden Contacts: {body_contact_fraction:.2%}")
     print(f"Final Fitness:      {fitness:.4f}")
     print("="*40 + "\n")
+    return fitness, final_dy
 
 if __name__ == "__main__":
     # Your optimized parameters extracted from the JSON output
