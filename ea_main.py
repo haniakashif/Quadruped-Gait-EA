@@ -90,6 +90,7 @@ class QuadrupedEA(BaseEA):
         termination_count = 0
         # select different schemes
         survival_selector = self.fitness_proportionate 
+        survival_selector = self.fitness_proportionate 
         diversity_threshold = 0.04
         
         history_best = []
@@ -210,9 +211,9 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=50, 
+        population_size=30, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
-        mutation_rate=0.10,
+        mutation_rate=0.05,
         visual_mode=True
     )
     

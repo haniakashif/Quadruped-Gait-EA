@@ -154,23 +154,18 @@ def run_validation(params: dict, sim_time: float):
 if __name__ == "__main__":
     # Your optimized parameters extracted from the JSON output
     optimized_params = {
-            "gamma": 0.5926305434436441,
-            "duty_cycle": 0.4403628785493242,
-            "coupling_w": 1.3689476065934458,
-            "mu_r0": 0.6,
-            "mu_o0": -0.1430828114668955,
-            "psi_1": 0.6231694283984517,
-            "mu_r1": 0.2995061782829216,
-            "mu_o1": 0.5100364659783847,
-            "psi_2": -0.2931674109413954,
-            "mu_r2_1": 0.6275781461954273,
-            "mu_r2_2": 0.0,
-            "mu_o2": 0.9081204362768748 
-        }
-    total_fitness, total_dy = 0.0, 0.0
-    for i in range (5):
-        fitness, dy = run_validation(optimized_params, sim_time=150.0)
-        total_fitness += fitness
-        total_dy += dy
-    print(f"Average Fitness: {total_fitness / 5:.4f}")
-    print(f"Average Forward Travel (Y): {total_dy / 5:.4f} m")
+        "gamma": 0.5926305434436441,
+        "duty_cycle": 0.4403628785493242,
+        "coupling_w": 1.3689476065934458,
+        "mu_r0": 0.6,
+        "mu_o0": -0.1430828114668955,
+        "psi_1": 0.6231694283984517,
+        "mu_r1": 0.2995061782829216,
+        "mu_o1": 0.5100364659783847,
+        "psi_2": -0.2931674109413954,
+        "mu_r2_1": 0.6275781461954273,
+        "mu_r2_2": 0.0,
+        "mu_o2": 0.9081204362768748
+    }
+    
+    run_validation(optimized_params, sim_time=150.0)
