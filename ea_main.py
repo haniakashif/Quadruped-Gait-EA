@@ -137,7 +137,7 @@ class QuadrupedEA(BaseEA):
 
             diversity = self.population_diversity()
             if diversity < diversity_threshold:
-                self.inject_diversity(replace_fraction=0.25)
+                self.inject_diversity(replace_fraction=0.35)
                 diversity = self.population_diversity()
                 diversity_injected_gens.append(gen)
             print(f"Gen {gen}: Diversity = {diversity:.4f}")
@@ -210,10 +210,10 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=30, 
+        population_size=50, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
-        mutation_rate=0.05,
-        visual_mode=False
+        mutation_rate=0.10,
+        visual_mode=True
     )
     
     ea.run_loop(num_generations=200, patience=50)
