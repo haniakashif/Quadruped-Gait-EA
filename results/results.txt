@@ -1,0 +1,98 @@
+Running different setups and putting best params here:
+
+combined pool is formed, no generational scheme, only standard EA stuff. Different selection schemes used, trying out the ones below:
+
+scheme order: parent selection, survivor selection
+
+attempt 1:
+tournament, truncation
+pop_size = 15
+num_gen = 50
+patience = 20
+gen_terminated = 46
+plot = trial_run.png 
+history = trial_run_fitness_history.json
+
+
+attempt 2:
+tournament, truncation
+pop_size = 30
+num_gen = 500
+patience = 20
+gen_terminated = 81
+plot = pop30gen81pat20.png 
+history = pop30gen81pat20.json
+Gen 80: Current Best Fitness = 4.1725 | Overall Best = 4.1725
+
+
+attempt 3:
+tournament, rank based
+mutation_rate = 0.05
+diversity_inject = 25%
+sim_time = 200
+target_z_height = 0.0762 (from spawning and checking height)
+pop_size = 30
+num_gen = 50
+patience = 20
+gen_terminated = 49
+plot = pop30gen50diversity.png
+history = pop30gen50Divers_best_params_history.json, pop30gen50Divers_fitness_history.json
+Gen 49: Current Best Fitness = 7.4777 | Overall Best = 7.4910
+
+
+attempt 4:
+tournament, rank
+mutation_rate = 0.1
+diversity_inject = 35%
+sim_time = 150
+target_z_height = 0.09
+pop_size = 30
+num_gen = 100
+patience = 20
+gen_terminated = 75
+plot = pop30gen100Divers35ZdesPat20simT150.png
+history = pop30gen100Divers35ZdesPat20simT150.json (2 files)
+
+
+attempt 5:
+tournament, proportionate
+mutation_rate = 0.05
+diversity_inject = 35%
+sim_time = 150
+target_z_height = 0.12
+pop_size = 30
+num_gen = 100
+patience = 20
+gen_terminated = 44
+plot = pop30gen44Divers35.png
+history = pop30gen44Divers35.json (2 files)
+Gen 43: Current Best Fitness = 5.4544 | Overall Best = 5.5386
+not good parameters, robot sways to the side all the time
+
+
+attempt 6:
+tournament, rank 
+mutation_rate = 0.05
+diversity_inject = 25%
+sim_time = 150
+target_z_height = 0.12
+pop_size = 30
+num_gen = 200
+patience = 50
+gen_terminated = 199
+Gen 199: Current Best Fitness = 7.1055 | Overall Best = 7.1756
+good generation and robot hits the terrain less, but its very wobbly so might need to incorporate stability
+
+
+attempt 7:
+tournament, rank
+mutation_rate = 0.05
+diversity_inject = 25%
+sim_time = 150
+contact_penalty = 5
+pop_size = 50
+num_gen = 200
+patience = 50
+gen_terminated = 199
+plot = pop50gen200Divers25simT150Contact.png and .json 
+Gen 199: Current Best Fitness = 7.1769 | Overall Best = 7.1967
