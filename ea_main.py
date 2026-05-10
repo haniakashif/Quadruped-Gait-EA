@@ -89,8 +89,7 @@ class QuadrupedEA(BaseEA):
         _, best_ever_fitness = self.best_solution()
         termination_count = 0
         # select different schemes
-        survival_selector = self.fitness_proportionate 
-        survival_selector = self.fitness_proportionate 
+        survival_selector = self.rank_based
         diversity_threshold = 0.04
         
         history_best = []
@@ -138,7 +137,7 @@ class QuadrupedEA(BaseEA):
 
             diversity = self.population_diversity()
             if diversity < diversity_threshold:
-                self.inject_diversity(replace_fraction=0.35)
+                self.inject_diversity(replace_fraction=0.25)
                 diversity = self.population_diversity()
                 diversity_injected_gens.append(gen)
             print(f"Gen {gen}: Diversity = {diversity:.4f}")
@@ -211,8 +210,7 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
     
     ea = QuadrupedEA(
-        population_size=30, 
-        population_size=30, 
+        population_size=50, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
         mutation_rate=0.05,
         visual_mode=False

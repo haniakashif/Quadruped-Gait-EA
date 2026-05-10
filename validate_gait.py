@@ -5,42 +5,31 @@ import mujoco
 import mujoco.viewer
 import cpg_core
 import evaluator
+import matplotlib.pyplot as plt
 
-# --- LINUX WAYLAND FIX ---
-# Forces GLFW to use X11 backend to prevent window destruction deadlocks
 os.environ["GDK_BACKEND"] = "x11" 
 os.environ["XDG_SESSION_TYPE"] = "x11"
-
-def generate_blocky_terrain(nrow, ncol):
-    print("Generating Terrain ...")
-    terrain = np.zeros((nrow, ncol))
-    
-    zone1_end = nrow // 3      
-    zone2_end = 2 * nrow // 3  
-    
-    mod_block = 1
-    mod_max_height = 0.5  
-    for i in range(zone1_end, zone2_end, mod_block):
-        for j in range(0, ncol, mod_block):
-            terrain[i:i+mod_block, j:j+mod_block] = np.random.uniform(0.0, mod_max_height)
-
-    hard_block = 1
-    hard_max_height = 1.0 
-    for i in range(zone2_end, nrow, hard_block):
-        for j in range(0, ncol, hard_block):
-            terrain[i:i+hard_block, j:j+hard_block] = np.random.uniform(0.0, hard_max_height)
-            
-    return terrain.flatten()
+# Create results directory if it doesn't exist
+results_dir = os.path.join(os.path.dirname(__file__), "results")
+os.makedirs(results_dir, exist_ok=True)
 
 def run_validation(params: dict, sim_time: float):
-    """
-    Executes a MuJoCo simulation using a deterministic set of CPG parameters.
-    """
     print("Initializing MuJoCo environment...")
     xml_path = os.path.join(os.path.dirname(__file__), "scene.xml")
     model = mujoco.MjModel.from_xml_path(xml_path)
         
-    terrain_data = generate_blocky_terrain(nrow=model.hfield_nrow[0], ncol=model.hfield_ncol[0])
+    # terrain_data = evaluator.generate_blocky_terrain(nrow=model.hfield_nrow[0], ncol=model.hfield_ncol[0])
+    # terrain_data = evaluator.generate_interleaved_terrain(
+    #         nrow=model.hfield_nrow[0],
+    #         ncol=model.hfield_ncol[0],
+    #         verbose=False,
+    #     )
+    terrain_data = evaluator.generate_randomized_interleaved_terrain(
+        nrow=model.hfield_nrow[0],
+        ncol=model.hfield_ncol[0],
+        verbose=False,
+    )
+    
     model.hfield_data[:] = terrain_data
     data = mujoco.MjData(model)
     
@@ -49,22 +38,21 @@ def run_validation(params: dict, sim_time: float):
     body_contact_steps = 0
     total_steps = 0
     
+    time_steps = []
+    commanded_angles = [[] for _ in range(12)]
+    actual_angles = [[] for _ in range(12)]
+    actual_torques = [[] for _ in range(12)]
+    
     # --- CPG INITIALIZATION ---
     dt = model.opt.timestep
     omega = 0.25 
     
-    # 1. Target Walking Gait Offsets
     target_offsets = np.array([0.0, 0.5, 0.25, 0.75]) * 2 * np.pi
-    
-    # 2. Bootstrap the master clocks to avoid transient swaying
     c_phi_0 = target_offsets.copy() 
-    
-    # 3. Initialize current state arrays at zero for smooth ODE ramp-up
     c_a0, c_o0 = np.zeros(4), np.zeros(4)
     c_a1, c_o1 = np.zeros(4), np.zeros(4)
     c_a2_1, c_a2_2, c_o2 = np.zeros(4), np.zeros(4), np.zeros(4)
     
-    # 4. Map the provided physical parameters to the target arrays
     t_a0 = np.full(4, params['mu_r0'])
     t_o0 = np.full(4, params['mu_o0'])
     t_a1 = np.full(4, params['mu_r1'])
@@ -78,7 +66,6 @@ def run_validation(params: dict, sim_time: float):
         while viewer.is_running() and data.time <= sim_time:
             step_start = time.time()
             
-            # --- CPG DYNAMICAL SYSTEM ---
             c_a0 = cpg_core.update_state_variables(c_a0, t_a0, params['gamma'], dt)
             c_o0 = cpg_core.update_state_variables(c_o0, t_o0, params['gamma'], dt)
             c_a1 = cpg_core.update_state_variables(c_a1, t_a1, params['gamma'], dt)
@@ -102,7 +89,6 @@ def run_validation(params: dict, sim_time: float):
             theta_1 = cpg_core.compute_target_angles(c_a1, c_o1, phi_1_w, False)
             theta_2 = cpg_core.compute_target_angles(c_a2, c_o2, phi_2_spline, True)
 
-            # --- KINEMATIC INVERSION FOR LEFT LEGS ---
             raw_angles = np.zeros(12)
             raw_angles[0:3]  = [-theta_0[0], -theta_1[0], -theta_2[0]] # BL
             raw_angles[3:6]  = [ theta_0[1],  theta_1[1],  theta_2[1]] # BR
@@ -110,9 +96,14 @@ def run_validation(params: dict, sim_time: float):
             raw_angles[9:12] = [ theta_0[3],  theta_1[3],  theta_2[3]] # FR
             
             data.ctrl[:] = cpg_core.clamp_to_joint_limits(raw_angles)
-            
-            # Step physics and render
             mujoco.mj_step(model, data)
+            
+            time_steps.append(data.time)
+            for i in range(12):
+                commanded_angles[i].append(raw_angles[i])  
+                actual_angles[i].append(data.qpos[i + 7])  
+                actual_torques[i].append(data.qfrc_actuator[i + 6])
+            
             total_steps += 1
             if evaluator.has_forbidden_terrain_contact(model, data):
                 body_contact_steps += 1
@@ -123,15 +114,12 @@ def run_validation(params: dict, sim_time: float):
                 break
             
             viewer.sync()
-            
-            # Clock synchronization
             time_until_next_step = dt - (time.time() - step_start)
             if time_until_next_step > 0:
                 time.sleep(time_until_next_step)
         
         viewer.close() 
 
-    # --- PERFORMANCE DIAGNOSTICS ---
     final_dx = data.body("base_link").xpos[0] - initial_pos[0]
     final_dy = data.body("base_link").xpos[1] - initial_pos[1]
     body_contact_fraction = (
@@ -142,29 +130,108 @@ def run_validation(params: dict, sim_time: float):
     fitness = final_dy - (drift_penalty_weight * abs(final_dx))
     
     print("\n" + "="*40)
-    print(" VALIDATION COMPLETE ")
-    print("="*40)
     print(f"Forward Travel (Y): {final_dy:.4f} m")
     print(f"Lateral Drift (X):  {final_dx:.4f} m")
     print(f"Forbidden Contacts: {body_contact_fraction:.2%}")
     print(f"Final Fitness:      {fitness:.4f}")
     print("="*40 + "\n")
+    
+    leg_names = ["BL", "BL", "BL", "BR", "BR", "BR", "FL", "FL", "FL", "FR", "FR", "FR"]
+    joint_names = ["Hip", "Knee", "Ankle"]
+    
+    # Plot Joint Angles
+    fig_angles, axes_angles = plt.subplots(4, 3, figsize=(16, 12))
+    fig_angles.suptitle("Joint Angles", fontsize=16, fontweight='bold')
+    
+    for i in range(12):
+        ax = axes_angles[i // 3, i % 3]
+        ax.plot(time_steps, commanded_angles[i], label="Commanded Angles", linewidth=1.5, color='blue')
+        ax.set_title(f"{leg_names[i]} - {joint_names[i % 3]}", fontsize=11, fontweight='bold')
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Angle (rad)")
+        ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "joint_angles.png"), dpi=150, bbox_inches='tight')
+    print("Saved joint_angles.png")
+    
+    fig_actual_angles, axes_actual_angles = plt.subplots(4, 3, figsize=(16, 12))
+    fig_actual_angles.suptitle("Actual Joint Angles", fontsize=16, fontweight='bold')
+    
+    for i in range(12):
+        ax = axes_actual_angles[i // 3, i % 3]
+        ax.plot(time_steps, actual_angles[i], label="Actual Angles", linewidth=1.5, color='green')
+        ax.set_title(f"{leg_names[i]} - {joint_names[i % 3]}", fontsize=11, fontweight='bold')
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Angle (rad)")
+        ax.grid(True, alpha=0.3)
+        
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "actual_joint_angles.png"), dpi=150, bbox_inches='tight')
+    print("Saved actual_joint_angles.png")
+    
+    # Plot Motor Torques
+    fig_torques, axes_torques = plt.subplots(4, 3, figsize=(16, 12))
+    fig_torques.suptitle("Servo Torques", fontsize=16, fontweight='bold')
+    
+    for i in range(12):
+        ax = axes_torques[i // 3, i % 3]
+        ax.plot(time_steps, actual_torques[i], label="Actual Torque", linewidth=1.5, color='red')
+        ax.set_title(f"{leg_names[i]} - {joint_names[i % 3]}", fontsize=11, fontweight='bold')
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Torque (N·m)")
+        ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "servo_torques.png"), dpi=150, bbox_inches='tight')
+    print("Saved servo_torques.png")
+    
+    # --- ALTERNATIVE TORQUE PLOTTING: Per-Leg Detailed View ---
+    # Comment out the previous torque section to use this instead
+    
+    leg_names_full = ["BL", "BR", "FL", "FR"]
+    joint_indices = {
+        "BL": [0, 1, 2],
+        "BR": [3, 4, 5],
+        "FL": [6, 7, 8],
+        "FR": [9, 10, 11]
+    }
+    joint_names = ["Hip", "Knee", "Ankle"]
+    
+    for leg_idx, leg_name in enumerate(leg_names_full):
+        fig_leg, axes_leg = plt.subplots(3, 1, figsize=(18, 10))
+        fig_leg.suptitle(f"{leg_name} Leg - Joint Torques", fontsize=16, fontweight='bold')
+        
+        joint_indices_for_leg = joint_indices[leg_name]
+        
+        for joint_pos, joint_idx in enumerate(joint_indices_for_leg):
+            ax = axes_leg[joint_pos]
+            ax.plot(time_steps, actual_torques[joint_idx], linewidth=1.2, color='red', alpha=0.8)
+            ax.set_title(f"{leg_name} - {joint_names[joint_pos]} Joint", fontsize=12, fontweight='bold')
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Torque (N·m)")
+            ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(results_dir, f"torque_{leg_name}.png"), dpi=150, bbox_inches='tight')
+        print(f"Saved torque_{leg_name}.png")
+    
+    plt.close('all')
 
 if __name__ == "__main__":
-    # Your optimized parameters extracted from the JSON output
     optimized_params = {
-        "gamma": 0.5926305434436441,
-        "duty_cycle": 0.4403628785493242,
-        "coupling_w": 1.3689476065934458,
-        "mu_r0": 0.6,
-        "mu_o0": -0.1430828114668955,
-        "psi_1": 0.6231694283984517,
-        "mu_r1": 0.2995061782829216,
-        "mu_o1": 0.5100364659783847,
-        "psi_2": -0.2931674109413954,
-        "mu_r2_1": 0.6275781461954273,
-        "mu_r2_2": 0.0,
-        "mu_o2": 0.9081204362768748
+        "gamma": 0.33242948003377987,
+        "duty_cycle": 0.4172964738872599,
+        "coupling_w": 1.814359554786942,
+        "mu_r0": 0.5977562499535333,
+        "mu_o0": -0.06821011367710861,
+        "psi_1": 0.6283185307179586,
+        "mu_r1": 0.2878435438298354,
+        "mu_o1": 0.4279269256411492,
+        "psi_2": -0.47850751097630134,
+        "mu_r2_1": 0.697308337055854,
+        "mu_r2_2": 0.007488975240002193,
+        "mu_o2": 0.85
     }
     
     run_validation(optimized_params, sim_time=150.0)
