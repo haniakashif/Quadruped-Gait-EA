@@ -213,7 +213,7 @@ if __name__ == "__main__":
         population_size=50, 
         minimize=False, # want to MAXIMIZE distance, so minimize=False
         mutation_rate=0.05,
-        visual_mode=False
+        visual_mode=True
     )
     
     ea.run_loop(num_generations=200, patience=50)
